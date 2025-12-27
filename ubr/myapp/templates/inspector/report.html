@@ -1,0 +1,32 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="card">
+    <h2>Inspection Report #{{ report.pk }}</h2>
+    <p><strong>Owner:</strong> {{ report.inspection_request.owner.get_full_name|default:report.inspection_request.owner.username }} ({{ report.inspection_request.owner.email }})</p>
+    <p><strong>Building location:</strong> {{ report.inspection_request.building_location }}</p>
+    <p><strong>Inspection date:</strong> {{ report.inspection_date }}</p>
+
+    <h4>Structural safety evaluation</h4>
+    <p>{{ report.structural_evaluation|default:'(none)' }}</p>
+
+    <h4>Compliance checklist</h4>
+    <pre>{{ report.compliance_checklist|default:'(none)' }}</pre>
+
+    <h4>Decision</h4>
+    <p>{{ report.decision }}</p>
+
+    <h4>Remarks</h4>
+    <p>{{ report.remarks|default:'(none)' }}</p>
+
+    <p>
+        <a class="btn btn-primary" href="{% url 'download_report' report.pk %}">Download Report (TXT)</a>
+        {% if request.user == report.inspection_request.owner %}
+            <a class="btn btn-secondary" href="{% url 'owner_dashboard' %}">Back</a>
+        {% elif request.user.is_staff %}
+            <a class="btn btn-secondary" href="{% url 'admin_dashboard' %}">Back</a>
+        {% else %}
+            <a class="btn btn-secondary" href="{% url 'inspector_dashboard' %}">Back</a>
+        {% endif %}
+    </p>
+</div>
+{% endblock %}

@@ -28,3 +28,9 @@ class SignUpForm(UserCreationForm):
             is_approved = False if user_type == 'Inspector' else True
             Profile.objects.create(user=user, user_type=user_type, nid=nid, phone=phone, location=location, is_approved=is_approved)
         return user
+
+
+class ProfileForm(forms.ModelForm):
+    class Meta:
+        model = Profile
+        fields = ['nid', 'phone', 'location']

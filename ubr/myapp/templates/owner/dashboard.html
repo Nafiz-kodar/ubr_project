@@ -25,6 +25,10 @@
                 <td>{% if r.inspector %}{{ r.inspector.get_full_name|default:r.inspector.username }}{% else %}Not Assigned{% endif %}</td>
                 <td>
                     <a class="btn btn-primary-gradient btn-sm" href="{% url 'payment' r.id %}">Pay</a>
+                    {% if r.report_obj %}
+                        <a class="btn btn-sm btn-info ms-1" href="{% url 'view_report' r.report_obj.pk %}">View Report</a>
+                        <a class="btn btn-sm btn-outline-primary ms-1" href="{% url 'download_report' r.report_obj.pk %}">Download</a>
+                    {% endif %}
                 </td>
             </tr>
             {% empty %}

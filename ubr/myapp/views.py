@@ -3,9 +3,10 @@ from django.contrib.auth import login
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from .forms import SignUpForm
-from .models import Profile, InspectionRequest, Message  # import your models
+from .models import Profile, InspectionRequest, InspectionReport, Message  # import your models
 from django.contrib.auth.models import User
 from django.shortcuts import get_object_or_404
+from django.http import HttpResponse
 
 
 def signup(request):
@@ -53,7 +54,7 @@ def dashboard_redirect(request):
     """
     Redirect users to the correct dashboard based on user_type.
     """
-    profile = request.user.profile
+    profile, _ = Profile.objects.get_or_create(user=request.user)
     if profile.user_type == 'Owner':
         return redirect('owner_dashboard')
     elif profile.user_type == 'Inspector':
@@ -69,7 +70,14 @@ def owner_dashboard(request):
     """
     Show inspection requests for the logged-in building owner.
     """
-    requests = InspectionRequest.objects.filter(owner=request.user)
+    requests = list(InspectionRequest.objects.filter(owner=request.user))
+    # attach report object if exists to avoid template OneToOne access errors
+    from .models import InspectionReport
+    for req in requests:
+        try:
+            req.report_obj = req.report
+        except InspectionReport.DoesNotExist:
+            req.report_obj = None
     return render(request, 'owner/dashboard.html', {'data': requests})
 
 
@@ -80,6 +88,25 @@ def inspector_dashboard(request):
     """
     requests = InspectionRequest.objects.filter(inspector=request.user)
     return render(request, 'inspector/dashboard.html', {'data': requests})
+
+
+@login_required
+def edit_profile(request):
+    """Allow users (inspectors) to edit their profile fields."""
+    profile, _ = Profile.objects.get_or_create(user=request.user)
+    from .forms import ProfileForm
+    if request.method == 'POST':
+        form = ProfileForm(request.POST, instance=profile)
+        if form.is_valid():
+            form.save()
+            messages.success(request, 'Profile updated.')
+            # Redirect back to the appropriate dashboard
+            if profile.user_type == 'Inspector':
+                return redirect('inspector_dashboard')
+            return redirect('dashboard_redirect')
+    else:
+        form = ProfileForm(instance=profile)
+    return render(request, 'inspector/edit_profile.html', {'form': form, 'profile': profile})
 
 
 @login_required
@@ -122,7 +149,17 @@ def owner_complaint(request):
     """Submit a complaint to an inspector. Template expects `inspectors` context."""
     inspectors = User.objects.filter(profile__user_type='Inspector')
     if request.method == 'POST':
-        # No Complaint model in repo — just flash a message for now
+        inspector_id = request.POST.get('inspector')
+        message_text = request.POST.get('message', '').strip()
+        inspector = None
+        if inspector_id:
+            try:
+                inspector = User.objects.get(pk=inspector_id)
+            except User.DoesNotExist:
+                inspector = None
+        # Create complaint record
+        from .models import Complaint
+        Complaint.objects.create(reporter=request.user, against_inspector=inspector, message=message_text)
         messages.success(request, 'Complaint submitted to the inspector.')
         return redirect('owner_dashboard')
     return render(request, 'owner/complaints.html', {'inspectors': inspectors})
@@ -203,6 +240,93 @@ def admin_assign_inspector(request, pk=None):
 
 
 @login_required
+def admin_manage_complaints(request):
+    # Restrict to staff/admins
+    if not request.user.is_staff:
+        messages.error(request, 'Permission denied.')
+        return redirect('dashboard_redirect')
+    from .models import Complaint, Profile
+    if request.method == 'POST':
+        cid = request.POST.get('complaint_id')
+        action = request.POST.get('action')
+        comp = get_object_or_404(Complaint, pk=cid)
+        if action == 'resolve':
+            comp.resolved = True
+            comp.save()
+            messages.success(request, f'Complaint {comp.pk} marked resolved.')
+        elif action == 'ban' and comp.against_inspector:
+            profile, _ = Profile.objects.get_or_create(user=comp.against_inspector)
+            profile.is_banned = True
+            profile.save()
+            messages.success(request, f'Inspector {comp.against_inspector.username} banned.')
+        elif action == 'unban' and comp.against_inspector:
+            profile, _ = Profile.objects.get_or_create(user=comp.against_inspector)
+            profile.is_banned = False
+            profile.save()
+            messages.success(request, f'Inspector {comp.against_inspector.username} unbanned.')
+        elif action == 'respond':
+            resp = request.POST.get('admin_response', '')
+            comp.admin_response = resp
+            comp.resolved = True
+            comp.save()
+            messages.success(request, f'Responded to complaint {comp.pk}.')
+        return redirect('admin_manage_complaints')
+
+    complaints = Complaint.objects.all().order_by('-created_at')
+    return render(request, 'admin/complaints.html', {'complaints': complaints})
+
+
+@login_required
+def admin_set_fee(request, pk):
+    # Only staff can set fees
+    if not request.user.is_staff:
+        messages.error(request, 'Permission denied.')
+        return redirect('dashboard_redirect')
+    req = get_object_or_404(InspectionRequest, pk=pk)
+    if request.method == 'POST':
+        fee = request.POST.get('fee')
+        try:
+            req.fee = float(fee)
+            req.save()
+            messages.success(request, f'Fee updated for request {req.pk}.')
+            return redirect('admin_dashboard')
+        except (TypeError, ValueError):
+            messages.error(request, 'Invalid fee value.')
+    return render(request, 'admin/set_fee.html', {'request_obj': req})
+
+
+@login_required
+def admin_view_users(request):
+    if not request.user.is_staff:
+        messages.error(request, 'Permission denied.')
+        return redirect('dashboard_redirect')
+    users = User.objects.all().order_by('username')
+    from .models import Profile
+    if request.method == 'POST':
+        action = request.POST.get('action')
+        uid = request.POST.get('user_id')
+        user = get_object_or_404(User, pk=uid)
+        profile, _ = Profile.objects.get_or_create(user=user)
+        if action == 'ban':
+            profile.is_banned = True
+            profile.save()
+            messages.success(request, f'User {user.username} banned.')
+        elif action == 'unban':
+            profile.is_banned = False
+            profile.save()
+            messages.success(request, f'User {user.username} unbanned.')
+        return redirect('admin_view_users')
+    # attach profile and counts
+    user_rows = []
+    for u in users:
+        profile, _ = Profile.objects.get_or_create(user=u)
+        inspections_count = InspectionRequest.objects.filter(owner=u).count()
+        assigned_count = InspectionRequest.objects.filter(inspector=u).count()
+        user_rows.append({'user': u, 'profile': profile, 'inspections_count': inspections_count, 'assigned_count': assigned_count})
+    return render(request, 'admin/users.html', {'users': user_rows})
+
+
+@login_required
 def inspector_inspection_view(request, pk):
     # Inspector view for a specific inspection request
     req = get_object_or_404(InspectionRequest, pk=pk)
@@ -213,25 +337,33 @@ def inspector_inspection_view(request, pk):
             structural = request.POST.get('structural')
             checklist = request.POST.get('checklist')
             decision = 'Approved'
-            report = InspectionReport.objects.create(inspection_request=req, inspector=request.user, structural_evaluation=structural, compliance_checklist=checklist, decision=decision, remarks=request.POST.get('remarks',''))
+            report = InspectionReport.objects.create(
+                inspection_request=req,
+                inspector=request.user,
+                structural_evaluation=structural,
+                compliance_checklist=checklist,
+                decision=decision,
+                remarks=request.POST.get('remarks','')
+            )
             req.status = 'Approved'
             req.save()
             messages.success(request, 'Inspection approved and report generated.')
-            return redirect('inspector_dashboard')
+            return redirect('view_report', pk=report.pk)
         elif action == 'reject':
             reason = request.POST.get('reason')
-            InspectionReport.objects.create(inspection_request=req, inspector=request.user, decision='Rejected', remarks=reason)
+            report = InspectionReport.objects.create(inspection_request=req, inspector=request.user, decision='Rejected', remarks=reason)
             req.status = 'Rejected'
             req.save()
             messages.success(request, 'Inspection rejected.')
-            return redirect('inspector_dashboard')
+            return redirect('view_report', pk=report.pk)
     return render(request, 'inspector/inspect_request.html', {'req': req})
 
 
 @login_required
 def send_message(request):
     """Send a new internal message to another user."""
-    users = User.objects.exclude(pk=request.user.pk)
+    # Restrict recipients to Admins and Inspectors only
+    users = User.objects.filter(profile__user_type__in=['Admin', 'Inspector']).exclude(pk=request.user.pk)
     if request.method == 'POST':
         recipient_id = request.POST.get('recipient')
         subject = request.POST.get('subject', '')
@@ -261,3 +393,45 @@ def view_message(request, pk):
         messages.success(request, 'Reply sent.')
         return redirect('inbox')
     return render(request, 'messages/view.html', {'msg': msg})
+
+
+@login_required
+def view_report(request, pk):
+    """Render an inspection report for viewing by owner, inspector, or admin."""
+    report = get_object_or_404(InspectionReport, pk=pk)
+    # permission: owner, inspector, or staff
+    if request.user != report.inspection_request.owner and request.user != report.inspector and not request.user.is_staff:
+        messages.error(request, 'Permission denied.')
+        return redirect('dashboard_redirect')
+    return render(request, 'inspector/report.html', {'report': report})
+
+
+@login_required
+def download_report(request, pk):
+    """Provide a simple text download of the inspection report."""
+    report = get_object_or_404(InspectionReport, pk=pk)
+    if request.user != report.inspection_request.owner and request.user != report.inspector and not request.user.is_staff:
+        messages.error(request, 'Permission denied.')
+        return redirect('dashboard_redirect')
+
+    lines = []
+    lines.append(f"Inspection Report #{report.pk}")
+    lines.append(f"Owner: {report.inspection_request.owner.username} ({report.inspection_request.owner.email})")
+    lines.append(f"Building location: {report.inspection_request.building_location}")
+    lines.append(f"Inspection date: {report.inspection_date}")
+    lines.append("")
+    lines.append("Structural safety evaluation:")
+    lines.append(report.structural_evaluation or '(none)')
+    lines.append("")
+    lines.append("Compliance checklist:")
+    lines.append(report.compliance_checklist or '(none)')
+    lines.append("")
+    lines.append(f"Decision: {report.decision}")
+    lines.append("")
+    lines.append("Remarks:")
+    lines.append(report.remarks or '(none)')
+
+    content = "\n".join(lines)
+    resp = HttpResponse(content, content_type='text/plain; charset=utf-8')
+    resp['Content-Disposition'] = f'attachment; filename=inspection_report_{report.pk}.txt'
+    return resp

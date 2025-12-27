@@ -1,0 +1,31 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="card">
+    <h3>All Users</h3>
+    <table class="table">
+        <thead><tr><th>Username</th><th>Email</th><th>Type</th><th>Inspections</th><th>Assigned</th><th>Banned</th><th>Actions</th></tr></thead>
+        <tbody>
+            {% for row in users %}
+            <tr>
+                <td>{{ row.user.username }}</td>
+                <td>{{ row.user.email }}</td>
+                <td>{{ row.profile.user_type }}</td>
+                <td>{{ row.inspections_count }}</td>
+                <td>{{ row.assigned_count }}</td>
+                <td>{{ row.profile.is_banned }}</td>
+                <td>
+                    <form method="post" style="display:inline">{% csrf_token %}
+                        <input type="hidden" name="user_id" value="{{ row.user.pk }}">
+                        {% if not row.profile.is_banned %}
+                        <button name="action" value="ban" class="btn btn-sm btn-danger">Ban</button>
+                        {% else %}
+                        <button name="action" value="unban" class="btn btn-sm btn-outline-danger">Unban</button>
+                        {% endif %}
+                    </form>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}
