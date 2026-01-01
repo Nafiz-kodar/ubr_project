@@ -83,17 +83,22 @@ WSGI_APPLICATION = 'ubr.wsgi.application'
 #         'PORT': '3306',
 #     }
 # }
+# DATABASES = {
+#     'default': {
+#         'ENGINE': 'django.db.backends.mysql',
+#         'NAME': 'property_inspection_db',
+#         'USER': 'root',
+#         'PASSWORD': '12345@@',
+#         'HOST': 'localhost',
+#         'PORT': '3306',
+#     }
+# }
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.mysql',
-        'NAME': 'property_inspection_db',
-        'USER': 'root',
-        'PASSWORD': '12345@@',
-        'HOST': 'localhost',
-        'PORT': '3306',
+        'ENGINE': 'django.db.backends.sqlite3',
+        'NAME': BASE_DIR / 'db.sqlite3',
     }
 }
-
 
 
 # Password validation
