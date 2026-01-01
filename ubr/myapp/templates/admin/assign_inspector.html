@@ -8,13 +8,13 @@
     <form method="post">{% csrf_token %}
         <div class="mb-3">
             <label>Select Inspector</label>
-            <select name="inspector" class="form-control">
+            <select name="inspector" class="form-control" title="Select an inspector">
                 {% for i in inspectors %}
                     <option value="{{ i.id }}">{{ i.get_full_name|default:i.username }}</option>
                 {% endfor %}
             </select>
         </div>
-        <button class="btn btn-primary">Assign</button>
+        <button type="submit" class="btn btn-primary">Assign</button>
     </form>
 </div>
 {% endblock %}

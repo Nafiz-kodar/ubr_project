@@ -5,7 +5,7 @@
     <form method="post">{% csrf_token %}
         <div class="mb-3">
             <label>To</label>
-            <select name="recipient" class="form-control">
+            <select name="recipient" class="form-control" title="Select the recipient">
                 {% for u in users %}
                 <option value="{{ u.id }}">{{ u.get_full_name|default:u.username }}</option>
                 {% endfor %}
@@ -13,13 +13,13 @@
         </div>
         <div class="mb-3">
             <label>Subject</label>
-            <input name="subject" class="form-control">
+            <input name="subject" class="form-control" title="Enter the subject" placeholder="Subject">
         </div>
         <div class="mb-3">
             <label>Message</label>
-            <textarea name="body" class="form-control"></textarea>
+            <textarea name="body" class="form-control" title="Enter your message" placeholder="Write your message here"></textarea>
         </div>
-        <button class="btn btn-primary">Send</button>
+        <button type="submit" class="btn btn-primary">Send</button>
     </form>
 </div>
 {% endblock %}

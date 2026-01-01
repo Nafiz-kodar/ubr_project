@@ -3,7 +3,17 @@
 <div class="card">
     <h3>Manage Complaints</h3>
     <table class="table">
-        <thead><tr><th>ID</th><th>Reporter</th><th>Inspector</th><th>Message</th><th>Response</th><th>Resolved</th><th>Actions</th></tr></thead>
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Reporter</th>
+                <th>Inspector</th>
+                <th>Message</th>
+                <td>{% if c.against_inspector and c.against_inspector.username %}{{ c.against_inspector.username }}{% else %}-{% endif %}</td>
+                <th>Resolved</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
         <tbody>
             {% for c in complaints %}
             <tr>
@@ -12,28 +22,28 @@
                 <td>{% if c.against_inspector %}{{ c.against_inspector.username }}{% else %}-{% endif %}</td>
                 <td>{{ c.message }}</td>
                 <td>{{ c.admin_response|default:'-' }}</td>
-                <td>{{ c.resolved }}</td>
+                <td>{{ c.resolved|yesno:"Yes,No" }}</td>
                 <td>
-                    <form method="post" style="display:inline">{% csrf_token %}
+                    <form method="post" class="inline-form">{% csrf_token %}
                         <input type="hidden" name="complaint_id" value="{{ c.id }}">
-                        <button name="action" value="resolve" class="btn btn-sm btn-success">Resolve</button>
+                        <button type="submit" name="action" value="resolve" class="btn btn-sm btn-success">Resolve</button>
                     </form>
                     {% if c.against_inspector %}
-                    <form method="post" style="display:inline">{% csrf_token %}
+                    <form method="post" class="inline-form">{% csrf_token %}
                         <input type="hidden" name="complaint_id" value="{{ c.id }}">
-                        <button name="action" value="ban" class="btn btn-sm btn-danger">Ban Inspector</button>
+                        <button type="submit" name="action" value="ban" class="btn btn-sm btn-danger">Ban Inspector</button>
                     </form>
-                    <form method="post" style="display:inline">{% csrf_token %}
+                    <form method="post" class="inline-form">{% csrf_token %}
                         <input type="hidden" name="complaint_id" value="{{ c.id }}">
-                        <button name="action" value="unban" class="btn btn-sm btn-outline-danger">Unban Inspector</button>
+                        <button type="submit" name="action" value="unban" class="btn btn-sm btn-outline-danger">Unban Inspector</button>
                     </form>
                     {% endif %}
-                    <button class="btn btn-sm btn-secondary" onclick="document.getElementById('resp-{{ c.id }}').style.display='block'">Respond</button>
-                    <div id="resp-{{ c.id }}" style="display:none;margin-top:8px">
+                    <button type="button" class="btn btn-sm btn-secondary" onclick="document.getElementById('resp-{{ c.id }}').style.display='block'">Respond</button>
+                    <div id="resp-{{ c.id }}" class="response-hidden">
                         <form method="post">{% csrf_token %}
                             <input type="hidden" name="complaint_id" value="{{ c.id }}">
                             <textarea name="admin_response" class="form-control mb-1" rows="2" placeholder="Write response"></textarea>
-                            <button name="action" value="respond" class="btn btn-sm btn-primary">Send Response</button>
+                            <button type="submit" name="action" value="respond" class="btn btn-sm btn-primary">Send Response</button>
                         </form>
                     </div>
                 </td>

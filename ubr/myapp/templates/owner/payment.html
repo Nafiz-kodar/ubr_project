@@ -7,7 +7,7 @@
         {% csrf_token %}
         <div class="mb-3">
             <label class="form-label">Payment Method</label>
-            <select name="method" class="form-control">
+            <select name="method" class="form-control" title="Select a payment method">
                 <option value="Bkash">Bkash </option>
                 <option value="Bank">Bank Transfer </option>
                 <option value="Card">Card </option>
@@ -16,7 +16,7 @@
         <button type="submit" id="payBtn" class="btn btn-primary-gradient w-100 mb-2">Pay Now</button>
     </form>
 
-    <div id="loading" style="display:none; margin-top:10px;">
+    <div id="loading" class="loading-spinner">
         <div class="spinner-border text-primary" role="status">
           <span class="visually-hidden">Processing...</span>
         </div>

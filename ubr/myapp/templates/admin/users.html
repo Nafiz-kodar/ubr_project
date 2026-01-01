@@ -14,12 +14,12 @@
                 <td>{{ row.assigned_count }}</td>
                 <td>{{ row.profile.is_banned }}</td>
                 <td>
-                    <form method="post" style="display:inline">{% csrf_token %}
+                    <form method="post" class="inline-form">{% csrf_token %}
                         <input type="hidden" name="user_id" value="{{ row.user.pk }}">
                         {% if not row.profile.is_banned %}
-                        <button name="action" value="ban" class="btn btn-sm btn-danger">Ban</button>
+                        <button type="submit" name="action" value="ban" class="btn btn-sm btn-danger">Ban</button>
                         {% else %}
-                        <button name="action" value="unban" class="btn btn-sm btn-outline-danger">Unban</button>
+                        <button type="submit" name="action" value="unban" class="btn btn-sm btn-outline-danger">Unban</button>
                         {% endif %}
                     </form>
                 </td>

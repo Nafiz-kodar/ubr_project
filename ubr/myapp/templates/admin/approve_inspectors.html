@@ -11,13 +11,13 @@
                 <td>{{ p.nid }}</td>
                 <td>{{ p.phone }}</td>
                 <td>
-                    <form method="post" style="display:inline">{% csrf_token %}
+                    <form method="post" class="inline-form">{% csrf_token %}
                         <input type="hidden" name="profile_id" value="{{ p.id }}">
-                        <button name="action" value="approve" class="btn btn-success btn-sm">Approve</button>
+                        <button type="submit" name="action" value="approve" class="btn btn-success btn-sm">Approve</button>
                     </form>
-                    <form method="post" style="display:inline">{% csrf_token %}
+                    <form method="post" class="inline-form">{% csrf_token %}
                         <input type="hidden" name="profile_id" value="{{ p.id }}">
-                        <button name="action" value="reject" class="btn btn-danger btn-sm">Reject</button>
+                        <button type="submit" name="action" value="reject" class="btn btn-danger btn-sm">Reject</button>
                     </form>
                 </td>
             </tr>

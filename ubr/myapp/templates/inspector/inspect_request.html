@@ -9,18 +9,18 @@
     <form method="post">{% csrf_token %}
         <div class="mb-3">
             <label>Structural Evaluation</label>
-            <textarea name="structural" class="form-control"></textarea>
+            <textarea name="structural" class="form-control" title="Provide structural evaluation" placeholder="Enter structural evaluation"></textarea>
         </div>
         <div class="mb-3">
             <label>Compliance Checklist</label>
-            <textarea name="checklist" class="form-control"></textarea>
+            <textarea name="checklist" class="form-control" title="Provide compliance checklist" placeholder="Enter compliance checklist"></textarea>
         </div>
         <div class="mb-3">
             <label>Remarks</label>
-            <textarea name="remarks" class="form-control"></textarea>
+            <textarea name="remarks" class="form-control" title="Provide remarks" placeholder="Enter remarks"></textarea>
         </div>
-        <button name="action" value="approve" class="btn btn-success">Approve</button>
-        <button name="action" value="reject" class="btn btn-danger">Reject</button>
+        <button name="action" value="approve" class="btn btn-success" type="submit">Approve</button>
+        <button name="action" value="reject" class="btn btn-danger" type="submit">Reject</button>
     </form>
 </div>
 {% endblock %}

@@ -5,7 +5,7 @@
     <form method="post">
         {% csrf_token %}
         <label>Inspector</label>
-        <select class="form-control mb-2" name="inspector">
+        <select class="form-control mb-2" name="inspector" title="Select an inspector">
             {% for i in inspectors %}
             <option value="{{ i.id }}">{{ i.name }}</option>
             {% endfor %}

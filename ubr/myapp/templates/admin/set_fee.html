@@ -5,10 +5,17 @@
     <p>Owner: {{ request_obj.owner.username }} — Location: {{ request_obj.building_location }}</p>
     <form method="post">{% csrf_token %}
         <div class="mb-3">
-            <label>Fee</label>
-            <input type="text" name="fee" class="form-control" value="{{ request_obj.fee }}">
+            <label for="fee" class="form-label">Fee</label>
+            <input
+                type="text"
+                id="fee"
+                name="fee"
+                class="form-control"
+                value="{{ request_obj.fee }}"
+            >
+            
         </div>
-        <button class="btn btn-primary">Save Fee</button>
+        <button type="submit" class="btn btn-primary">Save Fee</button>
         <a class="btn btn-secondary" href="{% url 'admin_dashboard' %}">Cancel</a>
     </form>
 </div>

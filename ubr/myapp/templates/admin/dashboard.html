@@ -1,18 +1,31 @@
 {% extends 'base.html' %}
+
 {% block content %}
-<div class="card">
+<div class="card p-3">
     <h3>Admin Dashboard</h3>
-    <p><strong>Admin Balance:</strong> {{ admin_balance.balance }}</p>
+
+    <p><strong>Admin Balance:</strong> {{ admin_balance.balance|default:"0" }}</p>
 
     <p>
         <a class="btn btn-sm btn-outline-primary" href="{% url 'admin_view_users' %}">View All Users</a>
-        <a class="btn btn-sm btn-outline-secondary" href="{% url 'admin_manage_complaints' %}">Manage Complaints ({{ pending_inspectors|length }})</a>
+        <a class="btn btn-sm btn-outline-secondary" href="{% url 'admin_manage_complaints' %}">
+            Manage Complaints ({{ pending_inspectors|length|default:"0" }})
+        </a>
         <a class="btn btn-sm btn-outline-success" href="{% url 'admin_approve_inspectors' %}">Approve Inspectors</a>
     </p>
 
     <h4 class="mt-3">Inspection Requests</h4>
-    <table class="table">
-        <thead><tr><th>ID</th><th>Owner</th><th>Location</th><th>Status</th><th>Inspector</th><th>Actions</th></tr></thead>
+    <table class="table table-bordered">
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Owner</th>
+                <th>Location</th>
+                <th>Status</th>
+                <th>Inspector</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
         <tbody>
             {% for r in data %}
             <tr>
@@ -31,18 +44,28 @@
                 </td>
             </tr>
             {% empty %}
-            <tr><td colspan="6">No requests</td></tr>
+            <tr>
+                <td colspan="6" class="text-center">No requests found.</td>
+            </tr>
             {% endfor %}
         </tbody>
     </table>
 
     <h4 class="mt-3">Pending Inspector Approvals</h4>
     <ul>
-        {% for p in pending_inspectors %}
-        <li>{{ p.user.username }} ({{ p.nid }})</li>
-        {% empty %}
-        <li>No pending inspectors.</li>
-        {% endfor %}
+        {% if pending_inspectors %}
+            {% for p in pending_inspectors %}
+                <li>
+                    {% if p.user %}
+                        {{ p.user.username|default:"No Username" }} ({{ p.nid|default:"No NID" }})
+                    {% else %}
+                        Inspector data incomplete
+                    {% endif %}
+                </li>
+            {% endfor %}
+        {% else %}
+            <li>No pending inspectors.</li>
+        {% endif %}
     </ul>
 </div>
 {% endblock %}

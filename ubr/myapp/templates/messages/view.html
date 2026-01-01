@@ -12,9 +12,10 @@
     <h5>Reply</h5>
     <form method="post">{% csrf_token %}
         <div class="mb-3">
-            <textarea name="body" class="form-control" rows="4"></textarea>
+            <label for="body">Message Body</label>
+            <textarea name="body" id="body" class="form-control" rows="4" placeholder="Write your reply here..." title="Reply message"></textarea>
         </div>
-        <button class="btn btn-primary">Send Reply</button>
+        <button type="submit" class="btn btn-primary">Send Reply</button>
     </form>
 </div>
 {% endblock %}
