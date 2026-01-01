@@ -52,20 +52,25 @@
     </table>
 
     <h4 class="mt-3">Pending Inspector Approvals</h4>
-    <ul>
+
+    <ul class="list-group" role="list">
         {% if pending_inspectors %}
             {% for p in pending_inspectors %}
-                <li>
+                <li class="list-group-item">
                     {% if p.user %}
-                        {{ p.user.username|default:"No Username" }} ({{ p.nid|default:"No NID" }})
+                        <strong>{{ p.user.username|default:"No Username" }}</strong>
+                        — NID: {{ p.nid|default:"No NID" }}
                     {% else %}
                         Inspector data incomplete
                     {% endif %}
                 </li>
             {% endfor %}
         {% else %}
-            <li>No pending inspectors.</li>
+            <li class="list-group-item text-muted">
+                No pending inspectors.
+            </li>
         {% endif %}
     </ul>
+    
 </div>
 {% endblock %}
