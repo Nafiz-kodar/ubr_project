@@ -48,7 +48,6 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
-    'myapp.custom_middleware.NoCacheMiddleware',
 ]
 
 ROOT_URLCONF = 'ubr.urls'
@@ -147,7 +146,3 @@ STATICFILES_DIRS = [BASE_DIR.parent / "static"]
 LOGIN_REDIRECT_URL = '/dashboard/'
 LOGOUT_REDIRECT_URL = '/'
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
-
-
-SESSION_COOKIE_AGE = 600
-SESSION_EXPIRE_AT_BROWSER_CLOSE = True

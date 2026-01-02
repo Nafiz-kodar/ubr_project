@@ -8,9 +8,6 @@ from django.contrib.auth.models import User
 from django.shortcuts import get_object_or_404
 from django.http import HttpResponse
 from .decorators import role_required
-from django.contrib.auth.decorators import login_required
-from django.views.decorators.cache import never_cache
-
 
 
 def signup(request):
@@ -444,20 +441,3 @@ def download_report(request, pk):
     resp = HttpResponse(content, content_type='text/plain; charset=utf-8')
     resp['Content-Disposition'] = f'attachment; filename=inspection_report_{report.pk}.txt'
     return resp
-
-
-@never_cache
-@login_required(login_url='login')
-def admin_dashboard(request):
-    return render(request, 'admin/dashboard.html')
-
-
-@never_cache
-@login_required(login_url='login')
-def owner_dashboard(request):
-    return render(request, 'owner/dashboard.html')
-
-@never_cache
-@login_required(login_url='login')
-def inspector_dashboard(request):
-    return render(request, 'inspector/dashboard.html')

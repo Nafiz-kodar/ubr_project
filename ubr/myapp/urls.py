@@ -1,16 +1,6 @@
 from django.urls import path
 from django.contrib.auth import views as auth_views
 from . import views
-from django.contrib.auth.views import LogoutView
-from django.views.decorators.cache import never_cache
-
-
-path(
-    'logout/',
-    never_cache(LogoutView.as_view(next_page='login')),
-    name='logout'
-),
-
 
 urlpatterns = [
     path('', views.home, name='home'),
