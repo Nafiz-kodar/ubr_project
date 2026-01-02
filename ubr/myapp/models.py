@@ -2,6 +2,8 @@
 from django.contrib.auth.models import User
 from django.db import models
 from django.utils import timezone
+from django.db.models.signals import post_save
+from django.dispatch import receiver
 
 
 class Profile(models.Model):
@@ -15,7 +17,7 @@ class Profile(models.Model):
     nid = models.CharField(max_length=50, blank=True, null=True)
     phone = models.CharField(max_length=30, blank=True, null=True)
     location = models.CharField(max_length=255, blank=True, null=True)
-    is_approved = models.BooleanField(default=True)  # Inspectors require admin approval
+    is_approved = models.BooleanField(default=True)  
     is_banned = models.BooleanField(default=False)
 
     def __str__(self):
@@ -95,25 +97,16 @@ class Payment(models.Model):
 
 
 class AdminBalance(models.Model):
-    # Single-row table to track demo admin balance
     balance = models.DecimalField(max_digits=12, decimal_places=2, default=0)
 
     def __str__(self):
         return f"Admin Balance: {self.balance}"
 
 
-# Ensure a Profile exists for every User. This creates a Profile when a User
-# is created and also ensures one exists if the signal fires for an existing
-# user without a Profile (get_or_create is idempotent).
-from django.db.models.signals import post_save
-from django.dispatch import receiver
-
 
 @receiver(post_save, sender=User)
 def ensure_user_profile(sender, instance, created, **kwargs):
     profile, _ = Profile.objects.get_or_create(user=instance)
-    # If the User has admin/staff flags (e.g. created via createsuperuser),
-    # ensure their Profile reflects that role so dashboard routing works.
     if instance.is_staff or instance.is_superuser:
         if profile.user_type != 'Admin':
             profile.user_type = 'Admin'
