@@ -441,3 +441,100 @@ def download_report(request, pk):
     resp = HttpResponse(content, content_type='text/plain; charset=utf-8')
     resp['Content-Disposition'] = f'attachment; filename=inspection_report_{report.pk}.txt'
     return resp
+
+
+from django.contrib.auth import logout
+from django.shortcuts import redirect
+from django.contrib import messages
+from django.views.decorators.cache import never_cache
+
+@never_cache
+def custom_logout(request):
+    """
+    Enhanced logout that clears session and prevents caching.
+    """
+    # Clear all messages
+    storage = messages.get_messages(request)
+    storage.used = True
+    
+    # Logout user
+    logout(request)
+    
+    # Add success message
+    messages.success(request, 'You have been logged out successfully.')
+    
+    # Create response with cache prevention headers
+    response = redirect('home')
+    response['Cache-Control'] = 'no-cache, no-store, must-revalidate, private'
+    response['Pragma'] = 'no-cache'
+    response['Expires'] = '0'
+    
+    return response
+
+# Add these imports at the top of views.py
+from django.views.decorators.cache import never_cache
+from .decorators import no_cache
+
+# Update your dashboard views like this:
+
+@login_required
+@never_cache
+def dashboard_redirect(request):
+    """
+    Redirect users to the correct dashboard based on user_type.
+    """
+    profile, _ = Profile.objects.get_or_create(user=request.user)
+    if profile.user_type == 'Owner':
+        return redirect('owner_dashboard')
+    elif profile.user_type == 'Inspector':
+        return redirect('inspector_dashboard')
+    elif profile.user_type == 'Admin':
+        return redirect('admin_dashboard')
+    else:
+        return redirect('home')
+
+
+@login_required
+@role_required('Owner')
+@never_cache
+def owner_dashboard(request):
+    """
+    Show inspection requests for the logged-in building owner.
+    """
+    requests = list(InspectionRequest.objects.filter(owner=request.user))
+    from .models import InspectionReport
+    for req in requests:
+        try:
+            req.report_obj = req.report
+        except InspectionReport.DoesNotExist:
+            req.report_obj = None
+    return render(request, 'owner/dashboard.html', {'data': requests})
+
+
+@login_required
+@role_required('Inspector')
+@never_cache
+def inspector_dashboard(request):
+    """
+    Show inspection requests assigned to the logged-in inspector.
+    """
+    requests = InspectionRequest.objects.filter(inspector=request.user)
+    return render(request, 'inspector/dashboard.html', {'data': requests})
+
+
+@login_required
+@role_required('Admin')
+@never_cache
+def admin_dashboard(request):
+    """
+    Show all inspection requests to admin with optional balance info.
+    """
+    requests = InspectionRequest.objects.all()
+    from .models import AdminBalance, Profile
+    admin_balance_obj, _ = AdminBalance.objects.get_or_create(pk=1)
+    pending_inspectors = Profile.objects.filter(user_type='Inspector', is_approved=False)
+    return render(request, 'admin/dashboard.html', {
+        'data': requests, 
+        'admin_balance': admin_balance_obj, 
+        'pending_inspectors': pending_inspectors
+    })
