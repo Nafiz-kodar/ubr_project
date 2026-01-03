@@ -300,9 +300,6 @@ class AdminBalance(models.Model):
         # SQL: SELECT CONCAT('Admin Balance: ', balance) FROM admin_balance WHERE id = %s
         return f"Admin Balance: {self.balance}"
 
-# Ensure a Profile exists for every User. This creates a Profile when a User
-# is created and also ensures one exists if the signal fires for an existing
-# user without a Profile (get_or_create is idempotent).
 
 @receiver(post_save, sender=User)
 def ensure_user_profile(sender, instance, created, **kwargs):
